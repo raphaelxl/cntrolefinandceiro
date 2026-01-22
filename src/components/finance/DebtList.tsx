@@ -2,7 +2,17 @@ import { Trash2, Download, TrendingDown, CreditCard, Banknote, QrCode, FileText 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import type { Debt } from '@/lib/finance-store';
+
+interface Debt {
+  id: string;
+  category: string;
+  subcategory: string;
+  value: number;
+  interest: number;
+  installments: number;
+  due_date: string | null;
+  payment_method: string;
+}
 
 interface DebtListProps {
   debts: Debt[];
@@ -55,7 +65,7 @@ export function DebtList({ debts, onDelete, onExport }: DebtListProps) {
         ) : (
           <div className="space-y-3">
             {debts.map((debt) => {
-              const PaymentIcon = getPaymentIcon(debt.paymentMethod);
+              const PaymentIcon = getPaymentIcon(debt.payment_method);
               return (
                 <div
                   key={debt.id}
@@ -73,7 +83,7 @@ export function DebtList({ debts, onDelete, onExport }: DebtListProps) {
                       <div className="flex items-center gap-2 mt-1">
                         <Badge variant="outline" className="text-xs">
                           <PaymentIcon className="h-3 w-3 mr-1" />
-                          {debt.paymentMethod}
+                          {debt.payment_method}
                         </Badge>
                         {debt.installments > 0 && (
                           <Badge variant="secondary" className="text-xs">
@@ -86,9 +96,9 @@ export function DebtList({ debts, onDelete, onExport }: DebtListProps) {
                           </Badge>
                         )}
                       </div>
-                      {debt.dueDate && (
+                      {debt.due_date && (
                         <p className="text-sm text-muted-foreground mt-1">
-                          Vencimento: {formatDate(debt.dueDate)}
+                          Vencimento: {formatDate(debt.due_date)}
                         </p>
                       )}
                     </div>

@@ -71,7 +71,7 @@ export function DebtForm({ onAdd }: DebtFormProps) {
     toast.success('Dívida adicionada com sucesso!');
   };
 
-  const isDueDateDisabled = paymentMethod === 'Dinheiro' || paymentMethod === 'PIX';
+  const isInstantPayment = paymentMethod === 'Dinheiro' || paymentMethod === 'PIX';
 
   return (
     <Card className="border-0 shadow-lg">
@@ -111,27 +111,6 @@ export function DebtForm({ onAdd }: DebtFormProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="debt-interest">Juros (%)</Label>
-              <Input
-                id="debt-interest"
-                type="number"
-                step="0.01"
-                placeholder="0"
-                value={interest}
-                onChange={(e) => setInterest(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="debt-installments">Parcelas</Label>
-              <Input
-                id="debt-installments"
-                type="number"
-                placeholder="0"
-                value={installments}
-                onChange={(e) => setInstallments(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="debt-payment-method">Forma de Pagamento</Label>
               <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                 <SelectTrigger>
@@ -146,16 +125,40 @@ export function DebtForm({ onAdd }: DebtFormProps) {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="debt-due-date">Data de Vencimento</Label>
-              <Input
-                id="debt-due-date"
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                disabled={isDueDateDisabled}
-              />
-            </div>
+            {!isInstantPayment && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="debt-interest">Juros (%)</Label>
+                  <Input
+                    id="debt-interest"
+                    type="number"
+                    step="0.01"
+                    placeholder="0"
+                    value={interest}
+                    onChange={(e) => setInterest(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="debt-installments">Parcelas</Label>
+                  <Input
+                    id="debt-installments"
+                    type="number"
+                    placeholder="0"
+                    value={installments}
+                    onChange={(e) => setInstallments(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="debt-due-date">Data de Vencimento</Label>
+                  <Input
+                    id="debt-due-date"
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                  />
+                </div>
+              </>
+            )}
           </div>
           <Button type="submit" variant="destructive" className="w-full md:w-auto">
             <Plus className="mr-2 h-4 w-4" />

@@ -42,7 +42,11 @@ export function FinancialChart({ totalIncomes, totalDebts, onExport }: Financial
             <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
               <XAxis dataKey="name" />
-              <YAxis tickFormatter={(value) => `R$ ${value}`} />
+              <YAxis 
+                tickFormatter={(value) => `R$ ${value}`}
+                domain={[0, 'auto']}
+                allowDataOverflow={false}
+              />
               <Tooltip 
                 formatter={(value: number) => formatCurrency(value)}
                 contentStyle={{ 

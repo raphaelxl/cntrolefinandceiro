@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Wallet } from 'lucide-react';
+import { Wallet, Loader2 } from 'lucide-react';
 import { Navigation, ScreenType } from '@/components/finance/Navigation';
 import { QuickSummary } from '@/components/finance/QuickSummary';
 import { IncomeForm } from '@/components/finance/IncomeForm';
@@ -10,28 +10,61 @@ import { FinancialChart } from '@/components/finance/FinancialChart';
 import { Statistics } from '@/components/finance/Statistics';
 import { GoalForm } from '@/components/finance/GoalForm';
 import { GoalList } from '@/components/finance/GoalList';
-import { useFinance } from '@/hooks/useFinance';
+import { AuthForm } from '@/components/auth/AuthForm';
+import { UserHeader } from '@/components/auth/UserHeader';
+import { useAuth } from '@/hooks/useAuth';
+import { useSupabaseFinance } from '@/hooks/useSupabaseFinance';
 
 const Index = () => {
   const [activeScreen, setActiveScreen] = useState<ScreenType>('resumo');
+  const { user, profile, loading: authLoading, signUp, signIn, signOut } = useAuth();
+  
   const {
     incomes,
     debts,
     goals,
-    monthlyData,
-    totalData,
-    statistics,
+    loading: dataLoading,
     addIncome,
     deleteIncome,
     addDebt,
     deleteDebt,
     addGoal,
     deleteGoal,
+    getMonthlyData,
+    getTotalData,
+    getStatistics,
     getGoalProgress,
     exportData,
-  } = useFinance();
+  } = useSupabaseFinance(user?.id);
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Show auth form if not logged in
+  if (!user) {
+    return <AuthForm onSignUp={signUp} onSignIn={signIn} />;
+  }
+
+  const monthlyData = getMonthlyData();
+  const totalData = getTotalData();
+  const statistics = getStatistics();
+  const userName = profile?.name || 'Usuário';
 
   const renderScreen = () => {
+    if (dataLoading) {
+      return (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      );
+    }
+
     switch (activeScreen) {
       case 'resumo':
         return (
@@ -104,7 +137,9 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
+      <UserHeader name={userName} onSignOut={signOut} />
+      
       <div className="container max-w-5xl py-6 px-4 md:py-10">
         {/* Header */}
         <header className="mb-8">
@@ -117,7 +152,7 @@ const Index = () => {
                 Controle Financeiro
               </h1>
               <p className="text-muted-foreground">
-                Gerencie suas finanças de forma simples
+                Olá, {userName}! Gerencie suas finanças
               </p>
             </div>
           </div>

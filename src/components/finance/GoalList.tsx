@@ -2,7 +2,13 @@ import { Trash2, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import type { Goal } from '@/lib/finance-store';
+
+interface Goal {
+  id: string;
+  category: string;
+  subcategory: string;
+  value: number;
+}
 
 interface GoalListProps {
   goals: Goal[];
