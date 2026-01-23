@@ -53,27 +53,84 @@ export type Database = {
         }
         Relationships: []
       }
+      goal_contributions: {
+        Row: {
+          created_at: string
+          description: string | null
+          goal_id: string
+          id: string
+          income_id: string | null
+          user_id: string
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          goal_id: string
+          id?: string
+          income_id?: string | null
+          user_id: string
+          value: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          goal_id?: string
+          id?: string
+          income_id?: string | null
+          user_id?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_contributions_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "goals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goal_contributions_income_id_fkey"
+            columns: ["income_id"]
+            isOneToOne: false
+            referencedRelation: "incomes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       goals: {
         Row: {
+          accumulated_value: number | null
           category: string
           created_at: string
+          end_date: string | null
           id: string
+          name: string | null
+          start_date: string | null
           subcategory: string | null
           user_id: string
           value: number
         }
         Insert: {
+          accumulated_value?: number | null
           category: string
           created_at?: string
+          end_date?: string | null
           id?: string
+          name?: string | null
+          start_date?: string | null
           subcategory?: string | null
           user_id: string
           value: number
         }
         Update: {
+          accumulated_value?: number | null
           category?: string
           created_at?: string
+          end_date?: string | null
           id?: string
+          name?: string | null
+          start_date?: string | null
           subcategory?: string | null
           user_id?: string
           value?: number
