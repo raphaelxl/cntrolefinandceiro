@@ -1,3 +1,15 @@
+// Goal categories and subcategories
+export const goalCategories: Record<string, string[]> = {
+  Economia: ['Reserva de emergência', 'Guardar dinheiro', 'Bens'],
+  Casa: ['Reforma', 'Comprar casa'],
+  Veículos: ['Carro', 'Moto'],
+  Viagem: ['Viagem nacional', 'Viagem internacional'],
+  Educação: ['Cursos', 'Faculdade'],
+  Investimentos: ['Ações', 'Criptomoedas'],
+  'Quitar Dívidas': ['Cartão de crédito', 'Empréstimos'],
+  Outros: ['Outros'],
+};
+
 // Income Categories and Subcategories
 export const incomeCategories: Record<string, string[]> = {
   'Salário': [
@@ -120,15 +132,32 @@ export const debtCategories: Record<string, string[]> = {
   ],
 };
 
-export const getSubcategories = (
-  type: 'income' | 'debt',
-  category: string
-): string[] => {
-  const categories = type === 'income' ? incomeCategories : debtCategories;
+export function getSubcategories(type: 'income' | 'debt' | 'goal', category: string): string[] {
+  const categoriesMap = {
+    income: incomeCategories,
+    debt: debtCategories,
+    goal: goalCategories,
+  };
+  const categories = categoriesMap[type];
   return categories[category] || [];
-};
+}
 
-export const getCategoryList = (type: 'income' | 'debt'): string[] => {
-  const categories = type === 'income' ? incomeCategories : debtCategories;
+export function getCategoryList(type: 'income' | 'debt' | 'goal'): string[] {
+  const categoriesMap = {
+    income: incomeCategories,
+    debt: debtCategories,
+    goal: goalCategories,
+  };
+  const categories = categoriesMap[type];
   return Object.keys(categories);
-};
+}
+
+export function isValidCategory(type: 'income' | 'debt' | 'goal', category: string): boolean {
+  const categoriesMap = {
+    income: incomeCategories,
+    debt: debtCategories,
+    goal: goalCategories,
+  };
+  const categories = categoriesMap[type];
+  return category in categories;
+}

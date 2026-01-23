@@ -30,6 +30,8 @@ const Index = () => {
     deleteDebt,
     addGoal,
     deleteGoal,
+    addContribution,
+    linkIncomeToGoal,
     getMonthlyData,
     getTotalData,
     getStatistics,
@@ -125,8 +127,11 @@ const Index = () => {
             <GoalForm onAdd={addGoal} />
             <GoalList
               goals={goals}
+              incomes={incomes}
               getProgress={getGoalProgress}
               onDelete={deleteGoal}
+              onAddContribution={addContribution}
+              onLinkIncome={linkIncomeToGoal}
             />
           </div>
         );
