@@ -154,19 +154,33 @@ export function useSupabaseFinance(userId: string | undefined) {
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
 
+    // Filter incomes for current month
     const monthlyIncomes = incomes.filter(i => {
       const d = new Date(i.date);
       return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
     });
 
+    // Filter debts for current month - include debts without due_date as current month
     const monthlyDebts = debts.filter(d => {
-      if (!d.due_date) return false;
+      if (!d.due_date) {
+        // If no due_date, check created_at or include in current month
+        return true;
+      }
       const dd = new Date(d.due_date);
       return dd.getMonth() === currentMonth && dd.getFullYear() === currentYear;
     });
 
-    const totalMonthlyIncomes = monthlyIncomes.reduce((sum, i) => sum + Number(i.value), 0);
-    const totalMonthlyDebts = monthlyDebts.reduce((sum, d) => sum + Number(d.value), 0);
+    // Sum all values ensuring they are treated as numbers
+    const totalMonthlyIncomes = monthlyIncomes.reduce((acc, i) => {
+      const val = typeof i.value === 'string' ? parseFloat(i.value) : Number(i.value);
+      return acc + (isNaN(val) ? 0 : val);
+    }, 0);
+    
+    const totalMonthlyDebts = monthlyDebts.reduce((acc, d) => {
+      const val = typeof d.value === 'string' ? parseFloat(d.value) : Number(d.value);
+      return acc + (isNaN(val) ? 0 : val);
+    }, 0);
+    
     const balance = totalMonthlyIncomes - totalMonthlyDebts;
 
     return {
@@ -177,40 +191,62 @@ export function useSupabaseFinance(userId: string | undefined) {
   }, [incomes, debts]);
 
   const getTotalData = useCallback(() => {
-    const totalIncomes = incomes.reduce((sum, i) => sum + Number(i.value), 0);
-    const totalDebts = debts.reduce((sum, d) => sum + Number(d.value), 0);
+    // Sum ALL incomes from database
+    const totalIncomes = incomes.reduce((acc, i) => {
+      const val = typeof i.value === 'string' ? parseFloat(i.value) : Number(i.value);
+      return acc + (isNaN(val) ? 0 : val);
+    }, 0);
+    
+    // Sum ALL debts from database
+    const totalDebts = debts.reduce((acc, d) => {
+      const val = typeof d.value === 'string' ? parseFloat(d.value) : Number(d.value);
+      return acc + (isNaN(val) ? 0 : val);
+    }, 0);
+    
     return { totalIncomes, totalDebts };
   }, [incomes, debts]);
 
   const getStatistics = useCallback(() => {
     if (debts.length === 0) return null;
 
+    // Helper to safely parse value
+    const parseValue = (val: number | string): number => {
+      const parsed = typeof val === 'string' ? parseFloat(val) : Number(val);
+      return isNaN(parsed) ? 0 : parsed;
+    };
+
+    // Find the highest debt
     const maxDebt = debts.reduce((prev, curr) => 
-      Number(prev.value) > Number(curr.value) ? prev : curr
+      parseValue(prev.value) > parseValue(curr.value) ? prev : curr
     );
 
+    // Calculate totals by category
     const categoryTotals: Record<string, number> = {};
     debts.forEach(d => {
-      categoryTotals[d.category] = (categoryTotals[d.category] || 0) + Number(d.value);
+      const val = parseValue(d.value);
+      categoryTotals[d.category] = (categoryTotals[d.category] || 0) + val;
     });
 
+    // Find the category with highest total
     const maxCategory = Object.keys(categoryTotals).reduce((a, b) =>
       categoryTotals[a] > categoryTotals[b] ? a : b
     );
 
-    const totalDebts = debts.reduce((sum, d) => sum + Number(d.value), 0);
+    // Calculate total of ALL debts
+    const totalDebts = debts.reduce((acc, d) => acc + parseValue(d.value), 0);
 
+    // Calculate percentage for each category
     const percentages = Object.keys(categoryTotals).map(cat => ({
       category: cat,
-      percentage: (categoryTotals[cat] / totalDebts) * 100,
+      percentage: totalDebts > 0 ? (categoryTotals[cat] / totalDebts) * 100 : 0,
       value: categoryTotals[cat],
     }));
 
     return {
       maxDebt: {
-        value: Number(maxDebt.value),
+        value: parseValue(maxDebt.value),
         category: maxDebt.category,
-        subcategory: maxDebt.subcategory,
+        subcategory: maxDebt.subcategory || '',
       },
       maxCategory,
       percentages,
@@ -219,17 +255,30 @@ export function useSupabaseFinance(userId: string | undefined) {
   }, [debts]);
 
   const getGoalProgress = useCallback((goal: Goal) => {
+    // Helper to safely parse value
+    const parseValue = (val: number | string): number => {
+      const parsed = typeof val === 'string' ? parseFloat(val) : Number(val);
+      return isNaN(parsed) ? 0 : parsed;
+    };
+
+    // Find all debts matching this goal's category and subcategory
     const relatedDebts = debts.filter(
       d => d.category === goal.category && d.subcategory === goal.subcategory
     );
+    
+    // Find all incomes matching this goal's category and subcategory
     const relatedIncomes = incomes.filter(
       i => i.category === goal.category && i.subcategory === goal.subcategory
     );
 
-    const totalSpent = relatedDebts.reduce((sum, d) => sum + Number(d.value), 0);
-    const totalEarned = relatedIncomes.reduce((sum, i) => sum + Number(i.value), 0);
+    // Sum ALL related debts
+    const totalSpent = relatedDebts.reduce((acc, d) => acc + parseValue(d.value), 0);
+    
+    // Sum ALL related incomes
+    const totalEarned = relatedIncomes.reduce((acc, i) => acc + parseValue(i.value), 0);
 
-    let progress = ((totalEarned - totalSpent) / Number(goal.value)) * 100;
+    const goalValue = parseValue(goal.value);
+    let progress = goalValue > 0 ? ((totalEarned - totalSpent) / goalValue) * 100 : 0;
     if (progress > 100) progress = 100;
     if (progress < 0) progress = 0;
 
@@ -237,7 +286,7 @@ export function useSupabaseFinance(userId: string | undefined) {
       progress,
       totalSpent,
       totalEarned,
-      remaining: Number(goal.value) - (totalEarned - totalSpent),
+      remaining: goalValue - (totalEarned - totalSpent),
     };
   }, [debts, incomes]);
 
