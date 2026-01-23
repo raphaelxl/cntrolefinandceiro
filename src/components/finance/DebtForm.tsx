@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { getCategoryList, getSubcategories } from '@/lib/categories';
 
 interface DebtFormProps {
   onAdd: (debt: {
@@ -37,23 +38,44 @@ const paymentMethods = [
 export function DebtForm({ onAdd }: DebtFormProps) {
   const [category, setCategory] = useState('');
   const [subcategory, setSubcategory] = useState('');
+  const [customCategory, setCustomCategory] = useState('');
+  const [customSubcategory, setCustomSubcategory] = useState('');
   const [value, setValue] = useState('');
   const [interest, setInterest] = useState('');
   const [installments, setInstallments] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('PIX');
+  const [subcategories, setSubcategories] = useState<string[]>([]);
+
+  const categories = getCategoryList('debt');
+  const isCustomCategory = category === '__custom__';
+  const isCustomSubcategory = subcategory === '__custom__';
+
+  useEffect(() => {
+    if (category && category !== '__custom__') {
+      setSubcategories(getSubcategories('debt', category));
+      setSubcategory('');
+      setCustomSubcategory('');
+    } else {
+      setSubcategories([]);
+      setSubcategory('');
+    }
+  }, [category]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!category || !value) {
+
+    const finalCategory = isCustomCategory ? customCategory : category;
+    const finalSubcategory = isCustomSubcategory ? customSubcategory : subcategory;
+
+    if (!finalCategory || !value) {
       toast.error('Preencha categoria e valor');
       return;
     }
 
     onAdd({
-      category,
-      subcategory,
+      category: finalCategory,
+      subcategory: finalSubcategory || '',
       value: parseFloat(value),
       interest: parseFloat(interest) || 0,
       installments: parseInt(installments) || 0,
@@ -63,11 +85,14 @@ export function DebtForm({ onAdd }: DebtFormProps) {
 
     setCategory('');
     setSubcategory('');
+    setCustomCategory('');
+    setCustomSubcategory('');
     setValue('');
     setInterest('');
     setInstallments('');
     setDueDate('');
     setPaymentMethod('PIX');
+    setSubcategories([]);
     toast.success('Dívida adicionada com sucesso!');
   };
 
@@ -83,22 +108,60 @@ export function DebtForm({ onAdd }: DebtFormProps) {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="debt-category">Categoria *</Label>
-              <Input
-                id="debt-category"
-                placeholder="Ex: Casa"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-              />
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="__custom__">+ Personalizada</SelectItem>
+                </SelectContent>
+              </Select>
+              {isCustomCategory && (
+                <Input
+                  placeholder="Digite a categoria"
+                  value={customCategory}
+                  onChange={(e) => setCustomCategory(e.target.value)}
+                  className="mt-2"
+                />
+              )}
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="debt-subcategory">Subcategoria</Label>
-              <Input
-                id="debt-subcategory"
-                placeholder="Ex: Aluguel"
+              <Select
                 value={subcategory}
-                onChange={(e) => setSubcategory(e.target.value)}
-              />
+                onValueChange={setSubcategory}
+                disabled={!category || isCustomCategory}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={category ? 'Selecione a subcategoria' : 'Selecione uma categoria primeiro'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {subcategories.map((sub) => (
+                    <SelectItem key={sub} value={sub}>
+                      {sub}
+                    </SelectItem>
+                  ))}
+                  {subcategories.length > 0 && (
+                    <SelectItem value="__custom__">+ Personalizada</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+              {(isCustomSubcategory || isCustomCategory) && (
+                <Input
+                  placeholder="Digite a subcategoria"
+                  value={customSubcategory}
+                  onChange={(e) => setCustomSubcategory(e.target.value)}
+                  className="mt-2"
+                />
+              )}
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="debt-value">Valor *</Label>
               <Input
@@ -110,6 +173,7 @@ export function DebtForm({ onAdd }: DebtFormProps) {
                 onChange={(e) => setValue(e.target.value)}
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="debt-payment-method">Forma de Pagamento</Label>
               <Select value={paymentMethod} onValueChange={setPaymentMethod}>
@@ -125,6 +189,7 @@ export function DebtForm({ onAdd }: DebtFormProps) {
                 </SelectContent>
               </Select>
             </div>
+
             {!isInstantPayment && (
               <>
                 <div className="space-y-2">
