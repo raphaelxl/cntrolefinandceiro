@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Trash2, Target, Plus, Calendar, TrendingUp, Link2 } from 'lucide-react';
+import { Trash2, Target, Plus, Calendar, TrendingUp, Link2, ChevronDown, ChevronUp, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { GoalContribution } from '@/hooks/useSupabaseFinance';
 
 interface Goal {
@@ -49,6 +50,19 @@ export function GoalList({ goals, incomes, getProgress, onDelete, onAddContribut
   const [contributionDescription, setContributionDescription] = useState('');
   const [selectedIncome, setSelectedIncome] = useState('');
   const [activeGoalId, setActiveGoalId] = useState<string | null>(null);
+  const [expandedGoals, setExpandedGoals] = useState<Set<string>>(new Set());
+
+  const toggleExpanded = (goalId: string) => {
+    setExpandedGoals(prev => {
+      const next = new Set(prev);
+      if (next.has(goalId)) {
+        next.delete(goalId);
+      } else {
+        next.add(goalId);
+      }
+      return next;
+    });
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -107,7 +121,8 @@ export function GoalList({ goals, incomes, getProgress, onDelete, onAddContribut
         ) : (
           <div className="space-y-6">
             {goals.map((goal) => {
-              const { progress, accumulated, remaining, status } = getProgress(goal);
+              const { progress, accumulated, remaining, status, contributions } = getProgress(goal);
+              const isExpanded = expandedGoals.has(goal.id);
               
               return (
                 <div
@@ -248,6 +263,43 @@ export function GoalList({ goals, incomes, getProgress, onDelete, onAddContribut
                       <span>Faltam: {formatCurrency(remaining)}</span>
                     </div>
                   </div>
+
+                  {/* Histórico de Aportes */}
+                  {contributions.length > 0 && (
+                    <Collapsible open={isExpanded} onOpenChange={() => toggleExpanded(goal.id)}>
+                      <CollapsibleTrigger asChild>
+                        <Button variant="ghost" size="sm" className="w-full mt-3 text-muted-foreground hover:text-foreground">
+                          <History className="h-4 w-4 mr-2" />
+                          Histórico de Aportes ({contributions.length})
+                          {isExpanded ? <ChevronUp className="h-4 w-4 ml-auto" /> : <ChevronDown className="h-4 w-4 ml-auto" />}
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="mt-2">
+                        <div className="space-y-2 max-h-48 overflow-y-auto">
+                          {contributions.map((contribution) => (
+                            <div 
+                              key={contribution.id} 
+                              className="flex items-center justify-between p-2 rounded-md bg-background/50 text-sm"
+                            >
+                              <div className="flex flex-col">
+                                <span className="font-medium text-income">
+                                  + {formatCurrency(contribution.value)}
+                                </span>
+                                {contribution.description && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {contribution.description}
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-xs text-muted-foreground">
+                                {formatDate(contribution.created_at)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  )}
                 </div>
               );
             })}
