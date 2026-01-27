@@ -6,6 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 interface UserHeaderProps {
   name: string;
@@ -14,7 +15,8 @@ interface UserHeaderProps {
 
 export function UserHeader({ name, onSignOut }: UserHeaderProps) {
   return (
-    <div className="absolute top-4 right-4 md:top-6 md:right-6">
+    <div className="absolute top-4 right-4 md:top-6 md:right-6 flex items-center gap-2">
+      <ThemeToggle />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" className="flex items-center gap-2">
