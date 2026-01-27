@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Wallet, Loader2 } from 'lucide-react';
 import { Navigation, ScreenType } from '@/components/finance/Navigation';
-import { MonthFilter } from '@/components/finance/MonthFilter';
+import { DateRangeFilter, DateRange } from '@/components/finance/DateRangeFilter';
 import { QuickSummary } from '@/components/finance/QuickSummary';
 import { IncomeForm } from '@/components/finance/IncomeForm';
 import { IncomeList } from '@/components/finance/IncomeList';
@@ -18,7 +18,7 @@ import { useSupabaseFinance } from '@/hooks/useSupabaseFinance';
 
 const Index = () => {
   const [activeScreen, setActiveScreen] = useState<ScreenType>('resumo');
-  const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
+  const [dateRange, setDateRange] = useState<DateRange>({ startDate: undefined, endDate: undefined });
   const { user, profile, loading: authLoading, signUp, signIn, signOut } = useAuth();
   
   const {
@@ -34,7 +34,7 @@ const Index = () => {
     deleteGoal,
     addContribution,
     linkIncomeToGoal,
-    getMonthlyData,
+    getDataByDateRange,
     getFilteredIncomes,
     getFilteredDebts,
     getTotalData,
@@ -57,11 +57,11 @@ const Index = () => {
     return <AuthForm onSignUp={signUp} onSignIn={signIn} />;
   }
 
-  const monthlyData = getMonthlyData(selectedMonth);
-  const filteredIncomes = getFilteredIncomes(selectedMonth);
-  const filteredDebts = getFilteredDebts(selectedMonth);
-  const totalData = getTotalData();
-  const statistics = getStatistics();
+  const rangeData = getDataByDateRange(dateRange.startDate, dateRange.endDate);
+  const filteredIncomes = getFilteredIncomes(dateRange.startDate, dateRange.endDate);
+  const filteredDebts = getFilteredDebts(dateRange.startDate, dateRange.endDate);
+  const totalData = getTotalData(dateRange.startDate, dateRange.endDate);
+  const statistics = getStatistics(dateRange.startDate, dateRange.endDate);
   const userName = profile?.name || 'Usuário';
 
   const renderScreen = () => {
@@ -78,9 +78,9 @@ const Index = () => {
         return (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <QuickSummary
-              incomes={monthlyData.incomes}
-              debts={monthlyData.debts}
-              balance={monthlyData.balance}
+              incomes={rangeData.incomes}
+              debts={rangeData.debts}
+              balance={rangeData.balance}
             />
           </div>
         );
@@ -170,7 +170,7 @@ const Index = () => {
           
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
             <Navigation activeScreen={activeScreen} onNavigate={setActiveScreen} />
-            <MonthFilter selectedDate={selectedMonth} onDateChange={setSelectedMonth} />
+            <DateRangeFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
           </div>
         </header>
 

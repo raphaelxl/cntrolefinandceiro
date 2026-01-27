@@ -226,83 +226,148 @@ export function useSupabaseFinance(userId: string | undefined) {
     });
   }, [incomes, userId, addContribution]);
 
-  const getMonthlyData = useCallback((filterDate?: Date) => {
-    const targetDate = filterDate || new Date();
-    const targetMonth = targetDate.getMonth();
-    const targetYear = targetDate.getFullYear();
-
-    const monthlyIncomes = incomes.filter(i => {
-      const d = new Date(i.date);
-      return d.getMonth() === targetMonth && d.getFullYear() === targetYear;
-    });
-
-    const monthlyDebts = debts.filter(d => {
-      if (!d.due_date) return false;
-      const dd = new Date(d.due_date);
-      return dd.getMonth() === targetMonth && dd.getFullYear() === targetYear;
-    });
-
+  const getDataByDateRange = useCallback((startDate?: Date, endDate?: Date) => {
     const parseValue = (val: number | string): number => {
       const parsed = typeof val === 'string' ? parseFloat(val) : Number(val);
       return isNaN(parsed) ? 0 : parsed;
     };
 
-    const totalMonthlyIncomes = monthlyIncomes.reduce((acc, i) => acc + parseValue(i.value), 0);
-    const totalMonthlyDebts = monthlyDebts.reduce((acc, d) => acc + parseValue(d.value), 0);
-    const balance = totalMonthlyIncomes - totalMonthlyDebts;
+    let filteredIncomes = incomes;
+    let filteredDebts = debts;
 
-    return { incomes: totalMonthlyIncomes, debts: totalMonthlyDebts, balance };
+    if (startDate || endDate) {
+      filteredIncomes = incomes.filter(i => {
+        const d = new Date(i.date);
+        if (startDate && d < startDate) return false;
+        if (endDate) {
+          const endOfDay = new Date(endDate);
+          endOfDay.setHours(23, 59, 59, 999);
+          if (d > endOfDay) return false;
+        }
+        return true;
+      });
+
+      filteredDebts = debts.filter(d => {
+        if (!d.due_date) return false;
+        const dd = new Date(d.due_date);
+        if (startDate && dd < startDate) return false;
+        if (endDate) {
+          const endOfDay = new Date(endDate);
+          endOfDay.setHours(23, 59, 59, 999);
+          if (dd > endOfDay) return false;
+        }
+        return true;
+      });
+    }
+
+    const totalIncomes = filteredIncomes.reduce((acc, i) => acc + parseValue(i.value), 0);
+    const totalDebts = filteredDebts.reduce((acc, d) => acc + parseValue(d.value), 0);
+    const balance = totalIncomes - totalDebts;
+
+    return { incomes: totalIncomes, debts: totalDebts, balance };
   }, [incomes, debts]);
 
-  const getFilteredIncomes = useCallback((filterDate?: Date) => {
-    if (!filterDate) return incomes;
-    const targetMonth = filterDate.getMonth();
-    const targetYear = filterDate.getFullYear();
+  const getFilteredIncomes = useCallback((startDate?: Date, endDate?: Date) => {
+    if (!startDate && !endDate) return incomes;
 
     return incomes.filter(i => {
       const d = new Date(i.date);
-      return d.getMonth() === targetMonth && d.getFullYear() === targetYear;
+      if (startDate && d < startDate) return false;
+      if (endDate) {
+        const endOfDay = new Date(endDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        if (d > endOfDay) return false;
+      }
+      return true;
     });
   }, [incomes]);
 
-  const getFilteredDebts = useCallback((filterDate?: Date) => {
-    if (!filterDate) return debts;
-    const targetMonth = filterDate.getMonth();
-    const targetYear = filterDate.getFullYear();
+  const getFilteredDebts = useCallback((startDate?: Date, endDate?: Date) => {
+    if (!startDate && !endDate) return debts;
 
     return debts.filter(d => {
       if (!d.due_date) return false;
       const dd = new Date(d.due_date);
-      return dd.getMonth() === targetMonth && dd.getFullYear() === targetYear;
+      if (startDate && dd < startDate) return false;
+      if (endDate) {
+        const endOfDay = new Date(endDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        if (dd > endOfDay) return false;
+      }
+      return true;
     });
   }, [debts]);
 
-  const getTotalData = useCallback(() => {
+  const getTotalData = useCallback((startDate?: Date, endDate?: Date) => {
     const parseValue = (val: number | string): number => {
       const parsed = typeof val === 'string' ? parseFloat(val) : Number(val);
       return isNaN(parsed) ? 0 : parsed;
     };
 
-    const totalIncomes = incomes.reduce((acc, i) => acc + parseValue(i.value), 0);
-    const totalDebts = debts.reduce((acc, d) => acc + parseValue(d.value), 0);
+    let filteredIncomes = incomes;
+    let filteredDebts = debts;
+
+    if (startDate || endDate) {
+      filteredIncomes = incomes.filter(i => {
+        const d = new Date(i.date);
+        if (startDate && d < startDate) return false;
+        if (endDate) {
+          const endOfDay = new Date(endDate);
+          endOfDay.setHours(23, 59, 59, 999);
+          if (d > endOfDay) return false;
+        }
+        return true;
+      });
+
+      filteredDebts = debts.filter(d => {
+        if (!d.due_date) return false;
+        const dd = new Date(d.due_date);
+        if (startDate && dd < startDate) return false;
+        if (endDate) {
+          const endOfDay = new Date(endDate);
+          endOfDay.setHours(23, 59, 59, 999);
+          if (dd > endOfDay) return false;
+        }
+        return true;
+      });
+    }
+
+    const totalIncomes = filteredIncomes.reduce((acc, i) => acc + parseValue(i.value), 0);
+    const totalDebts = filteredDebts.reduce((acc, d) => acc + parseValue(d.value), 0);
     
     return { totalIncomes, totalDebts };
   }, [incomes, debts]);
 
-  const getStatistics = useCallback(() => {
-    if (debts.length === 0) return null;
+  const getStatistics = useCallback((startDate?: Date, endDate?: Date) => {
+    let filteredDebts = debts;
+
+    if (startDate || endDate) {
+      filteredDebts = debts.filter(d => {
+        if (!d.due_date) return false;
+        const dd = new Date(d.due_date);
+        if (startDate && dd < startDate) return false;
+        if (endDate) {
+          const endOfDay = new Date(endDate);
+          endOfDay.setHours(23, 59, 59, 999);
+          if (dd > endOfDay) return false;
+        }
+        return true;
+      });
+    }
+
+    if (filteredDebts.length === 0) return null;
 
     const parseValue = (val: number | string): number => {
       const parsed = typeof val === 'string' ? parseFloat(val) : Number(val);
       return isNaN(parsed) ? 0 : parsed;
     };
 
-    const maxDebt = debts.reduce((prev, curr) => 
+    const maxDebt = filteredDebts.reduce((prev, curr) => 
       parseValue(prev.value) > parseValue(curr.value) ? prev : curr
     );
 
     const categoryTotals: Record<string, number> = {};
-    debts.forEach(d => {
+    filteredDebts.forEach(d => {
       const val = parseValue(d.value);
       categoryTotals[d.category] = (categoryTotals[d.category] || 0) + val;
     });
@@ -311,7 +376,7 @@ export function useSupabaseFinance(userId: string | undefined) {
       categoryTotals[a] > categoryTotals[b] ? a : b
     );
 
-    const totalDebts = debts.reduce((acc, d) => acc + parseValue(d.value), 0);
+    const totalDebts = filteredDebts.reduce((acc, d) => acc + parseValue(d.value), 0);
 
     const percentages = Object.keys(categoryTotals).map(cat => ({
       category: cat,
@@ -413,7 +478,7 @@ export function useSupabaseFinance(userId: string | undefined) {
     addContribution,
     deleteContribution,
     linkIncomeToGoal,
-    getMonthlyData,
+    getDataByDateRange,
     getFilteredIncomes,
     getFilteredDebts,
     getTotalData,
