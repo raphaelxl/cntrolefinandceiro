@@ -226,20 +226,20 @@ export function useSupabaseFinance(userId: string | undefined) {
     });
   }, [incomes, userId, addContribution]);
 
-  const getMonthlyData = useCallback(() => {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
+  const getMonthlyData = useCallback((filterDate?: Date) => {
+    const targetDate = filterDate || new Date();
+    const targetMonth = targetDate.getMonth();
+    const targetYear = targetDate.getFullYear();
 
     const monthlyIncomes = incomes.filter(i => {
       const d = new Date(i.date);
-      return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+      return d.getMonth() === targetMonth && d.getFullYear() === targetYear;
     });
 
     const monthlyDebts = debts.filter(d => {
-      if (!d.due_date) return true;
+      if (!d.due_date) return false;
       const dd = new Date(d.due_date);
-      return dd.getMonth() === currentMonth && dd.getFullYear() === currentYear;
+      return dd.getMonth() === targetMonth && dd.getFullYear() === targetYear;
     });
 
     const parseValue = (val: number | string): number => {
@@ -253,6 +253,29 @@ export function useSupabaseFinance(userId: string | undefined) {
 
     return { incomes: totalMonthlyIncomes, debts: totalMonthlyDebts, balance };
   }, [incomes, debts]);
+
+  const getFilteredIncomes = useCallback((filterDate?: Date) => {
+    if (!filterDate) return incomes;
+    const targetMonth = filterDate.getMonth();
+    const targetYear = filterDate.getFullYear();
+
+    return incomes.filter(i => {
+      const d = new Date(i.date);
+      return d.getMonth() === targetMonth && d.getFullYear() === targetYear;
+    });
+  }, [incomes]);
+
+  const getFilteredDebts = useCallback((filterDate?: Date) => {
+    if (!filterDate) return debts;
+    const targetMonth = filterDate.getMonth();
+    const targetYear = filterDate.getFullYear();
+
+    return debts.filter(d => {
+      if (!d.due_date) return false;
+      const dd = new Date(d.due_date);
+      return dd.getMonth() === targetMonth && dd.getFullYear() === targetYear;
+    });
+  }, [debts]);
 
   const getTotalData = useCallback(() => {
     const parseValue = (val: number | string): number => {
@@ -391,6 +414,8 @@ export function useSupabaseFinance(userId: string | undefined) {
     deleteContribution,
     linkIncomeToGoal,
     getMonthlyData,
+    getFilteredIncomes,
+    getFilteredDebts,
     getTotalData,
     getStatistics,
     getGoalProgress,

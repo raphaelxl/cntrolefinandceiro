@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Wallet, Loader2 } from 'lucide-react';
 import { Navigation, ScreenType } from '@/components/finance/Navigation';
+import { MonthFilter } from '@/components/finance/MonthFilter';
 import { QuickSummary } from '@/components/finance/QuickSummary';
 import { IncomeForm } from '@/components/finance/IncomeForm';
 import { IncomeList } from '@/components/finance/IncomeList';
@@ -17,6 +18,7 @@ import { useSupabaseFinance } from '@/hooks/useSupabaseFinance';
 
 const Index = () => {
   const [activeScreen, setActiveScreen] = useState<ScreenType>('resumo');
+  const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
   const { user, profile, loading: authLoading, signUp, signIn, signOut } = useAuth();
   
   const {
@@ -33,6 +35,8 @@ const Index = () => {
     addContribution,
     linkIncomeToGoal,
     getMonthlyData,
+    getFilteredIncomes,
+    getFilteredDebts,
     getTotalData,
     getStatistics,
     getGoalProgress,
@@ -53,7 +57,9 @@ const Index = () => {
     return <AuthForm onSignUp={signUp} onSignIn={signIn} />;
   }
 
-  const monthlyData = getMonthlyData();
+  const monthlyData = getMonthlyData(selectedMonth);
+  const filteredIncomes = getFilteredIncomes(selectedMonth);
+  const filteredDebts = getFilteredDebts(selectedMonth);
   const totalData = getTotalData();
   const statistics = getStatistics();
   const userName = profile?.name || 'Usuário';
@@ -84,7 +90,7 @@ const Index = () => {
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <IncomeForm onAdd={addIncome} />
             <IncomeList
-              incomes={incomes}
+              incomes={filteredIncomes}
               onDelete={deleteIncome}
               onExport={() => exportData('incomes')}
             />
@@ -96,7 +102,7 @@ const Index = () => {
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <DebtForm onAdd={addDebt} />
             <DebtList
-              debts={debts}
+              debts={filteredDebts}
               onDelete={deleteDebt}
               onExport={() => exportData('debts')}
             />
@@ -162,7 +168,10 @@ const Index = () => {
             </div>
           </div>
           
-          <Navigation activeScreen={activeScreen} onNavigate={setActiveScreen} />
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <Navigation activeScreen={activeScreen} onNavigate={setActiveScreen} />
+            <MonthFilter selectedDate={selectedMonth} onDateChange={setSelectedMonth} />
+          </div>
         </header>
 
         {/* Main Content */}
