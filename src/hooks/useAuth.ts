@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, supabaseConfigError } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 
 interface Profile {
@@ -12,8 +12,10 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [configError] = useState(supabaseConfigError);
 
   const fetchProfile = useCallback(async (userId: string) => {
+    if (!supabase) return;
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
@@ -26,6 +28,10 @@ export function useAuth() {
   }, []);
 
   useEffect(() => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setUser(session?.user ?? null);
@@ -52,6 +58,9 @@ export function useAuth() {
   }, [fetchProfile]);
 
   const signUp = async (email: string, password: string, name: string) => {
+    if (!supabase) {
+      return { data: null, error: new Error(configError ?? 'Supabase não configurado.') };
+    }
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -64,6 +73,9 @@ export function useAuth() {
   };
 
   const signIn = async (email: string, password: string) => {
+    if (!supabase) {
+      return { data: null, error: new Error(configError ?? 'Supabase não configurado.') };
+    }
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -72,6 +84,9 @@ export function useAuth() {
   };
 
   const signOut = async () => {
+    if (!supabase) {
+      return { error: new Error(configError ?? 'Supabase não configurado.') };
+    }
     const { error } = await supabase.auth.signOut();
     if (!error) {
       setUser(null);
@@ -84,6 +99,7 @@ export function useAuth() {
     user,
     profile,
     loading,
+    configError,
     signUp,
     signIn,
     signOut,

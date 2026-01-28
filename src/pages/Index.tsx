@@ -19,7 +19,7 @@ import { useSupabaseFinance } from '@/hooks/useSupabaseFinance';
 const Index = () => {
   const [activeScreen, setActiveScreen] = useState<ScreenType>('resumo');
   const [dateRange, setDateRange] = useState<DateRange>({ startDate: undefined, endDate: undefined });
-  const { user, profile, loading: authLoading, signUp, signIn, signOut } = useAuth();
+  const { user, profile, loading: authLoading, configError, signUp, signIn, signOut } = useAuth();
   
   const {
     incomes,
@@ -42,6 +42,24 @@ const Index = () => {
     getGoalProgress,
     exportData,
   } = useSupabaseFinance(user?.id);
+
+  if (configError) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-6">
+        <div className="max-w-lg text-center space-y-4">
+          <div className="inline-flex items-center justify-center rounded-full bg-destructive/10 px-4 py-2 text-sm font-medium text-destructive">
+            Configuração necessária
+          </div>
+          <h1 className="text-2xl font-semibold text-foreground">
+            Não foi possível carregar o controle financeiro
+          </h1>
+          <p className="text-muted-foreground">
+            {configError} Verifique seu arquivo <span className="font-medium text-foreground">.env</span> e reinicie o projeto.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   // Show loading while checking auth
   if (authLoading) {
