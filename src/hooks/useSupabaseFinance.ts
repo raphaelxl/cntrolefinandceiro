@@ -190,29 +190,17 @@ export function useSupabaseFinance(userId: string | undefined) {
     });
     
     if (!error) {
-      // Update accumulated_value on the goal
-      const goal = goals.find(g => g.id === contribution.goalId);
-      if (goal) {
-        const newAccumulated = (goal.accumulated_value || 0) + contribution.value;
-        await supabase.from('goals').update({ accumulated_value: newAccumulated }).eq('id', contribution.goalId);
-      }
       fetchData();
     }
     return { error };
-  }, [userId, goals, fetchData]);
+  }, [userId, fetchData]);
 
-  const deleteContribution = useCallback(async (id: string, goalId: string, value: number) => {
+  const deleteContribution = useCallback(async (id: string, _goalId: string, _value: number) => {
     const { error } = await supabase.from('goal_contributions').delete().eq('id', id);
     if (!error) {
-      // Update accumulated_value on the goal
-      const goal = goals.find(g => g.id === goalId);
-      if (goal) {
-        const newAccumulated = Math.max(0, (goal.accumulated_value || 0) - value);
-        await supabase.from('goals').update({ accumulated_value: newAccumulated }).eq('id', goalId);
-      }
       fetchData();
     }
-  }, [goals, fetchData]);
+  }, [fetchData]);
 
   const linkIncomeToGoal = useCallback(async (incomeId: string, goalId: string) => {
     const income = incomes.find(i => i.id === incomeId);
