@@ -52,7 +52,10 @@ export function useSupabaseFinance(userId: string | undefined) {
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
-    if (!userId) return;
+    if (!userId || !supabase) {
+      setLoading(false);
+      return;
+    }
     
     setLoading(true);
     
@@ -81,7 +84,9 @@ export function useSupabaseFinance(userId: string | undefined) {
     value: number;
     date: string;
   }) => {
-    if (!userId) return;
+    if (!userId || !supabase) {
+      return { error: new Error('Supabase não configurado.') };
+    }
     
     const { error } = await supabase.from('incomes').insert({
       user_id: userId,
@@ -98,6 +103,9 @@ export function useSupabaseFinance(userId: string | undefined) {
   }, [userId, fetchData]);
 
   const deleteIncome = useCallback(async (id: string) => {
+    if (!supabase) {
+      return;
+    }
     const { error } = await supabase.from('incomes').delete().eq('id', id);
     if (!error) {
       fetchData();
@@ -113,7 +121,9 @@ export function useSupabaseFinance(userId: string | undefined) {
     dueDate: string;
     paymentMethod: string;
   }) => {
-    if (!userId) return;
+    if (!userId || !supabase) {
+      return { error: new Error('Supabase não configurado.') };
+    }
     
     const { error } = await supabase.from('debts').insert({
       user_id: userId,
@@ -133,6 +143,9 @@ export function useSupabaseFinance(userId: string | undefined) {
   }, [userId, fetchData]);
 
   const deleteDebt = useCallback(async (id: string) => {
+    if (!supabase) {
+      return;
+    }
     const { error } = await supabase.from('debts').delete().eq('id', id);
     if (!error) {
       fetchData();
@@ -147,7 +160,9 @@ export function useSupabaseFinance(userId: string | undefined) {
     startDate: string;
     endDate: string | null;
   }) => {
-    if (!userId) return;
+    if (!userId || !supabase) {
+      return { error: new Error('Supabase não configurado.') };
+    }
     
     const { error } = await supabase.from('goals').insert({
       user_id: userId,
@@ -167,6 +182,9 @@ export function useSupabaseFinance(userId: string | undefined) {
   }, [userId, fetchData]);
 
   const deleteGoal = useCallback(async (id: string) => {
+    if (!supabase) {
+      return;
+    }
     const { error } = await supabase.from('goals').delete().eq('id', id);
     if (!error) {
       fetchData();
@@ -179,7 +197,9 @@ export function useSupabaseFinance(userId: string | undefined) {
     description?: string;
     incomeId?: string;
   }) => {
-    if (!userId) return;
+    if (!userId || !supabase) {
+      return { error: new Error('Supabase não configurado.') };
+    }
     
     const { error } = await supabase.from('goal_contributions').insert({
       user_id: userId,
@@ -196,6 +216,9 @@ export function useSupabaseFinance(userId: string | undefined) {
   }, [userId, fetchData]);
 
   const deleteContribution = useCallback(async (id: string, _goalId: string, _value: number) => {
+    if (!supabase) {
+      return;
+    }
     const { error } = await supabase.from('goal_contributions').delete().eq('id', id);
     if (!error) {
       fetchData();
