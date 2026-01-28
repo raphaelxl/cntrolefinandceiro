@@ -1,6 +1,7 @@
 -- Keep goals.accumulated_value consistent with goal_contributions
 CREATE OR REPLACE FUNCTION public.recalculate_goal_accumulated_value(target_goal_id UUID)
-RETURNS VOID AS $$
+RETURNS VOID
+SECURITY DEFINER AS $$
 BEGIN
   UPDATE public.goals
   SET accumulated_value = COALESCE(
@@ -9,7 +10,7 @@ BEGIN
   )
   WHERE id = target_goal_id;
 END;
-$$ LANGUAGE plpgsql SET search_path = public;
+$$ LANGUAGE plpgsql SET search_path = public, pg_temp;
 
 CREATE OR REPLACE FUNCTION public.sync_goal_accumulated_value()
 RETURNS TRIGGER AS $$
