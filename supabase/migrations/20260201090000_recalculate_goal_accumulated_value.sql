@@ -3,6 +3,17 @@ CREATE OR REPLACE FUNCTION public.recalculate_goal_accumulated_value(target_goal
 RETURNS VOID
 SECURITY DEFINER AS $$
 BEGIN
+  IF auth.role() <> 'service_role' THEN
+    PERFORM 1
+    FROM public.goals
+    WHERE id = target_goal_id
+      AND user_id = auth.uid();
+
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'Not authorized to update accumulated value for goal %', target_goal_id;
+    END IF;
+  END IF;
+
   UPDATE public.goals
   SET accumulated_value = COALESCE(
     (SELECT SUM(value) FROM public.goal_contributions WHERE goal_id = target_goal_id),
@@ -32,6 +43,20 @@ $$ LANGUAGE plpgsql SET search_path = public;
 DROP TRIGGER IF EXISTS sync_goal_accumulated_value_on_insert ON public.goal_contributions;
 DROP TRIGGER IF EXISTS sync_goal_accumulated_value_on_update ON public.goal_contributions;
 DROP TRIGGER IF EXISTS sync_goal_accumulated_value_on_delete ON public.goal_contributions;
+
+DROP POLICY IF EXISTS "Users can create their own goal contributions" ON public.goal_contributions;
+CREATE POLICY "Users can create their own goal contributions"
+ON public.goal_contributions
+FOR INSERT
+WITH CHECK (
+  auth.uid() = user_id
+  AND EXISTS (
+    SELECT 1
+    FROM public.goals
+    WHERE goals.id = goal_id
+      AND goals.user_id = auth.uid()
+  )
+);
 
 CREATE TRIGGER sync_goal_accumulated_value_on_insert
 AFTER INSERT ON public.goal_contributions
