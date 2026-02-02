@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,6 +6,7 @@ import { isSupabaseConfigured } from "@/integrations/supabase/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
+import { toast } from "sonner";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -26,10 +28,24 @@ const SupabaseConfigNotice = () => (
   </div>
 );
 
-const App = () => (
-  !isSupabaseConfigured ? (
-    <SupabaseConfigNotice />
-  ) : (
+const App = () => {
+  // Captura erros assíncronos não tratados para evitar tela branca
+  useEffect(() => {
+    const handleRejection = (event: PromiseRejectionEvent) => {
+      console.error("Erro não tratado:", event.reason);
+      toast.error("Ocorreu um erro. Por favor, tente novamente.");
+      event.preventDefault();
+    };
+
+    window.addEventListener("unhandledrejection", handleRejection);
+    return () => window.removeEventListener("unhandledrejection", handleRejection);
+  }, []);
+
+  if (!isSupabaseConfigured) {
+    return <SupabaseConfigNotice />;
+  }
+
+  return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <TooltipProvider>
@@ -45,7 +61,7 @@ const App = () => (
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
-  )
-);
+  );
+};
 
 export default App;
