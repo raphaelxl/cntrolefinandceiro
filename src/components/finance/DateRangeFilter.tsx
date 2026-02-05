@@ -3,9 +3,36 @@ import { CalendarIcon, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { format } from 'date-fns';
+import { format, startOfMonth, endOfMonth, subMonths, subDays, startOfYear } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+
+type PresetKey = 'thisMonth' | 'lastMonth' | 'last7Days' | 'last30Days' | 'thisYear';
+
+const presets: { key: PresetKey; label: string }[] = [
+  { key: 'thisMonth', label: 'Este mês' },
+  { key: 'lastMonth', label: 'Mês passado' },
+  { key: 'last7Days', label: 'Últimos 7 dias' },
+  { key: 'last30Days', label: 'Últimos 30 dias' },
+  { key: 'thisYear', label: 'Este ano' },
+];
+
+const getPresetRange = (key: PresetKey): DateRange => {
+  const today = new Date();
+  switch (key) {
+    case 'thisMonth':
+      return { startDate: startOfMonth(today), endDate: endOfMonth(today) };
+    case 'lastMonth':
+      const lastMonth = subMonths(today, 1);
+      return { startDate: startOfMonth(lastMonth), endDate: endOfMonth(lastMonth) };
+    case 'last7Days':
+      return { startDate: subDays(today, 7), endDate: today };
+    case 'last30Days':
+      return { startDate: subDays(today, 30), endDate: today };
+    case 'thisYear':
+      return { startDate: startOfYear(today), endDate: today };
+  }
+};
 
 export interface DateRange {
   startDate: Date | undefined;
@@ -21,6 +48,10 @@ export function DateRangeFilter({ dateRange, onDateRangeChange }: DateRangeFilte
   const [startOpen, setStartOpen] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
 
+  const handlePreset = (key: PresetKey) => {
+    onDateRangeChange(getPresetRange(key));
+  };
+
   const handleClear = () => {
     onDateRangeChange({ startDate: undefined, endDate: undefined });
   };
@@ -28,8 +59,24 @@ export function DateRangeFilter({ dateRange, onDateRangeChange }: DateRangeFilte
   const hasFilter = dateRange.startDate || dateRange.endDate;
 
   return (
-    <div className="flex flex-wrap items-center gap-2 p-2 bg-secondary/50 rounded-xl">
-      <div className="flex items-center gap-2">
+    <div className="flex flex-col gap-3 p-3 bg-secondary/50 rounded-xl">
+      {/* Filtros rápidos */}
+      <div className="flex flex-wrap gap-2">
+        {presets.map((preset) => (
+          <Button
+            key={preset.key}
+            variant="outline"
+            size="sm"
+            onClick={() => handlePreset(preset.key)}
+            className="text-xs"
+          >
+            {preset.label}
+          </Button>
+        ))}
+      </div>
+
+      {/* Seleção manual de datas */}
+      <div className="flex flex-wrap items-center gap-2">
         <Popover open={startOpen} onOpenChange={setStartOpen}>
           <PopoverTrigger asChild>
             <Button
