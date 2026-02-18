@@ -13,17 +13,16 @@ export const supabaseConfigError = !SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-const fallbackUrl = "https://example.supabase.co";
-const fallbackKey = "public-anon-key";
-
-export const supabase = createClient<Database>(
-  SUPABASE_URL ?? fallbackUrl,
-  SUPABASE_PUBLISHABLE_KEY ?? fallbackKey,
-  {
-    auth: {
-      storage: localStorage,
-      persistSession: true,
-      autoRefreshToken: true,
-    }
-  }
-);
+export const supabase = isSupabaseConfigured
+  ? createClient<Database>(
+      SUPABASE_URL!,
+      SUPABASE_PUBLISHABLE_KEY!,
+      {
+        auth: {
+          storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+          persistSession: true,
+          autoRefreshToken: true,
+        },
+      }
+    )
+  : null;
