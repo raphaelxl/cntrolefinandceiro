@@ -8,8 +8,12 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
   return {
-    base: "./",
+    base: "/cntrolefinandceiro/",
     plugins: [
+      build: {
+      outDir: 'dist',
+      assetsDir: 'assets_v2', // Isso muda o nome da pasta de arquivos internos
+    },
       react(),
       mode === "development" && componentTagger(),
     ].filter(Boolean),
