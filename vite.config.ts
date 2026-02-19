@@ -4,19 +4,18 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 export default defineConfig(({ mode }) => {
-  // Carrega todas as variáveis de ambiente sem prefixo
   const env = loadEnv(mode, process.cwd(), '');
 
   return {
     base: "/cntrolefinandceiro/",
     plugins: [
-      build: {
-      outDir: 'dist',
-      assetsDir: 'assets_v2', // Isso muda o nome da pasta de arquivos internos
-    },
       react(),
       mode === "development" && componentTagger(),
     ].filter(Boolean),
+    build: {
+      outDir: 'dist',
+      assetsDir: 'assets_v3',
+    },
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
